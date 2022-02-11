@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
-using OpenQA.Selenium.Support.UI;
 
 namespace zoom_bot
 {
