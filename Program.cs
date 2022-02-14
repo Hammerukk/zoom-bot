@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
@@ -16,7 +17,7 @@ namespace zoom_bot
                 options.SetPreference("permissions.default.microphone", 1);
                 options.SetPreference("permissions.default.camera", 1);
 
-                var driver = new FirefoxDriver(@".\WebDriver\bin\", options);
+                var driver = new FirefoxDriver(@"./WebDriver/bin/", options);
 
                 driver.Navigate().GoToUrl(url);
                 driver.FindElement(By.ClassName("mbTuDeF1")).Click();
@@ -68,18 +69,61 @@ namespace zoom_bot
                 Console.WriteLine("{{{0}}}", e.Message);
             }            
         }
+
+        static void StartBotThreads(int count, string url, List<string> nicks, string message, int messagePeriod, int creatingPeriod)
+        {
+            var threads = new List<Thread>();
+            for (int i = 0; i < count; i++)
+            {
+                threads.Add(new Thread(() => StartBot(url, nicks, i, message, messagePeriod)));
+                threads[i].Start();
+                Thread.Sleep(creatingPeriod);
+            }
+        }
+
         static void Main(string[] args)
         {
+            string url, message;
+            int count, messagePeriod, creatingPeriod;
+            List<string> nicks = new List<string>();
+
+            const string path = "params.txt";
+
+            if (File.Exists(path))
+            {
+                Console.Write("Parameters from previous session detected. Do you want to load it? (n for no, otherwise yes): ");
+                string confirm = Console.ReadLine();
+
+                if (confirm.ToLower() != "n")
+                {
+                    StreamReader sr = new StreamReader(path);
+
+                    count = Convert.ToInt32(sr.ReadLine());
+                    url = sr.ReadLine();
+                    for (int i = 0; i < count; i++)
+                    {
+                        nicks.Add(sr.ReadLine());
+                    }
+                    message = sr.ReadLine();
+                    messagePeriod = Convert.ToInt32(sr.ReadLine());
+                    creatingPeriod = Convert.ToInt32(sr.ReadLine());
+
+                    sr.Close();
+
+                    StartBotThreads(count, url, nicks, message, messagePeriod, creatingPeriod);
+                    return;
+                }
+            }
+
             Console.Write("Enter meeting URL: ");
-            string url = Console.ReadLine();
+            url = Console.ReadLine();
 
             Console.Write("Enter bot count: ");
-            int count = Convert.ToInt32(Console.ReadLine());
+            count = Convert.ToInt32(Console.ReadLine());
 
             Console.Write("Enter what bots should type in chat (leave empty to disable this): ");
-            string message = Console.ReadLine();
+            message = Console.ReadLine();
 
-            int messagePeriod;
             if (message != "")
             {
                 Console.Write("Enter message period in ms (leave empty for single time): ");
@@ -99,7 +143,6 @@ namespace zoom_bot
             }
 
             Console.Write("Enter bots creating period in ms (leave empty for default): ");
-            int creatingPeriod;
             var temp2 = Console.ReadLine();
             if (temp2 != "")
             {
@@ -110,20 +153,33 @@ namespace zoom_bot
                 creatingPeriod = 500;
             }
 
-            List<string> nicks = new List<string>();
+            nicks = new List<string>();
             for (int i = 0; i < count; i++)
             {
                 Console.Write("Enter nickname number {0}: ", i + 1);
                 nicks.Add(Console.ReadLine());
             }
+            
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
 
-            List<FirefoxDriver> drivers = new List<FirefoxDriver>();
+            StreamWriter sw = new StreamWriter(path);
+
+            sw.WriteLine(count);
+            sw.WriteLine(url);
             for (int i = 0; i < count; i++)
             {
-                var t = new Thread(() => StartBot(url, nicks, i, message, messagePeriod));
-                t.Start();
-                Thread.Sleep(creatingPeriod);
+                sw.WriteLine(nicks[i]);
             }
+            sw.WriteLine(message);
+            sw.WriteLine(messagePeriod);
+            sw.WriteLine(creatingPeriod);
+
+            sw.Close();
+
+            StartBotThreads(count, url, nicks, message, messagePeriod, creatingPeriod);
         }
     }
 }
