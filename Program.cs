@@ -91,7 +91,7 @@ namespace zoom_bot
 
             if (File.Exists(path))
             {
-                Console.Write("Parameters from previous session detected. Do you want to load it? (n for no, otherwise yes): ");
+                Console.Write("Parameters from previous session detected.\nDo you want to load it? (n for no, otherwise yes): ");
                 string confirm = Console.ReadLine();
 
                 if (confirm.ToLower() != "n")
