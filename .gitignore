@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#Project file. If you want to change filename, change also const path in Program.Main
+params.txt
+
 # User-specific files
 *.rsuser
 *.suo
